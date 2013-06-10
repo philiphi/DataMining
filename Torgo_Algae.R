@@ -108,12 +108,48 @@ algae <- algae[-c(62,99),]
 
 apply(algae, 1, function(x) sum(is.na(x)))
 
+#Function in the book package returns row# where count of Na > x = 0.2 default
+manyNAs(algae, 0.3)
+
+#Remove them
+algae <- algae[-manyNAs(algae), ]
+
+
+# Filling in the Unknowns with the Most Frequent Values
+# to use some statistic of centrality
+#mean good choice if roughtly normal dist
+#median  good choice if skewed dist
+
+#algae[48,] does not have a value in the variable mxPH. As the distribution of this variable is nearly normal
+algae[48,]
+
+#check for normality => Yes so mean good
+hist(algae$mxPH)
+
+#Replace msssing value with mean
+algae[48, "mxPH"] <- mean(algae$mxPH, na.rm = T)
+
+#variable Chla is unknown on 12 records
+#check for normality => NO - skewed
+hist(algae$Chla)
+# use the median to fll in all the unknowns in this column,
+algae[is.na(algae$Chla), "Chla"] <- median(algae$Chla, na.rm = T)
+
+# function centralImputation()  uses the median for numeric columns & mode for nominal variables. You may use it as follows:
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+algae <- centralImputation(algae)
+
+
+
+# Filling in the Unknown Values by Exploring Correlations
 
 
 
 
-#Made change 06/08/2013
-.....stopped page 54
+
+
+# .....stopped page 54
 
 
 
