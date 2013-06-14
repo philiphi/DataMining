@@ -144,12 +144,110 @@ algae <- centralImputation(algae)
 
 # Filling in the Unknown Values by Exploring Correlations
 
+# obtain the variables correlation
+#The use="complete.obs" setting tells R to disregard observations with NA values in this calculation 
+cor(algae[, 4:18], use = "complete.obs")
+
+# cor() function is not very legible but we can put it  through the function symnum()
+symnum(cor(algae[,4:18],use="complete.obs"))
+
+#PO4 and oPO4 are strongly correlated (above 0.9)
+#we need to find the form of the linear correlation between these variables
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+lm(PO4 ~ oPO4, data = algae)
+
+# There's a single observation with an unknown value on the variable PO4 (sample 28)
+# thus we could simply use the discovered relation to do the following:
+algae[28, "PO4"]
+algae[28, "PO4"] <- 42.897 + 1.293 * algae[28, "oPO4"]
+
+#Create a function to do from > 1 record
+data(algae)
+algae <- algae[-manyNAs(algae), ]
+fillPO4 <- function(oP) {
+  if (is.na(oP))
+    return(NA)
+  else return(42.897 + 1.293 * oP)
+  }
+
+
+#Call function
+#Reset algae[28, "PO4"] <- NA
+algae[is.na(algae$PO4), "PO4"] <- sapply(algae[is.na(algae$PO4),"oPO4"], fillPO4)
+
+#Note histogram is from {lattice}
+#**Nice 
+# histogram of the values of mxPH for the different values of season
+histogram(~mxPH | season, data = algae)
+
+# By default, when we factor a set of nominal variable values, the levels
+# parameter assumes the alphabetical ordering of these values. 
+# In this case we want a different ordering (the temporal order of the seasons), so we need to
+# specify it to the factor function. Try executing this instruction and afterward
+# obtain again the histogram to see the difference.
+algae$season <- factor(algae$season, levels = c("spring","summer", "autumn", "winter"))
+histogram(~mxPH | season, data = algae)
+
+
+
+
+#Filling in the Unknown Values by Exploring Similarities between Cases 
+#try to use the similarities between the rows (observations) to fill in the unknown values 
+# assumes that if two water samples are similar, and one of them has an unknown value in some variable, there is a
+# high probability that this value is similar to the value of the other sample. 
+# 
+# we need to define the notion ofsimilarity. 
+# usually defined using a metric over the multivariate space of the variables used to describe the observations.
+# common choice is the Euclidean distance
+# = square root of the sum of the squared diferences between the values of any two case
+
+# We will consider two ways of using their values. 
+  # 1. Calculate the median(mode if nominal variables) of the values of the ten nearest neighbors to fll in the gaps. 
+  # 2. Use a weighted average of the values of the neighbors
+      #use a Gaussian kernel function to obtain the weights from the distances
+
+# function knnImputation() available in the book package.
+#reset 
+data(algae)
+
+#For method1
+algae <- knnImputation(algae, k = 10, meth = "median")
+#For method2
+algae <- knnImputation(algae, k = 10)
+
+
+# 2.6 Obtaining Prediction Model
+
+# The implementation of linear regression available in R is not able to use
+# datasets with unknown values, the implementation of regression trees handles
+# these values naturally.
+
+
+#2.6.1 Multiple Linear Regression 
 
 
 
 
 
-# .....stopped page 54
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# .....stopped page 63
 
 
 
