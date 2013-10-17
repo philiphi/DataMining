@@ -107,33 +107,45 @@ Variable Importance importance=
 
 =============================================================================  
   
-srcWine <- read.csv(file.choose(),header =TRUE)
+library("RODBC")
+Conn <- odbcConnect(dsn="ExtprddmDM",uid="Bentley\\Phil.Hickey",pwd="Waterford?")
+Query <- "Select ContactID,OppCount,LeadCount,SRCount,Age,DaysSinceLogin,SiteArr from [ContactsActiveIMS]"
 
-str(srcWine)
-summary(srcWine)
+rawContacts <- sqlQuery(Conn,Query,errors=TRUE)
+# head(rawContacts)
+# str(rawContacts)
+# dim(rawContacts)  
+
+#Remove NA
+rawContacts <- na.omit(rawContacts)  
+
+#Subset of fields to use for clustering    
+# cols_to_use <- names(rawContacts[,c(4,7)])   
+# myData_sub <- rawContacts[,cols_to_use]   
+# head(myData_sub)
   
-data_wine <- na.omit(srcWine)
-nobs <- nrow(data_wine)
-form <- formula(quality ~ .)
 
-target <- all.vars(form)[1]
 
-#Exclude any variables heretarget
+#Exclude any variables here target
 # vars <- -grep('^(free.sulfur.dioxide)', names(data_wine))
 vars <- 1:12
 
-#Takes 70% of the the number nobs
+#Take 70:30 split
 set.seed(42)
-train <- sample(nobs, 0.7*nobs)
+data_all <- seq(1:nrow(rawContacts))
+data_train <- sample(nrow(rawContacts), 0.7*nrow(rawContacts))
+data_test <- data_all[-data_train]
 
-RFwine <- randomForest(formula=form,
-                          #train =  random sample , vars = all predictors
-                          data=data_wine[train, vars],
-                          ntree=500, mtry=4,
-                          importance=TRUE,
-                          localImp=TRUE,
-                          na.action=na.roughfix,
-                          replace=FALSE)
+myDTform <- formula(SiteArr ~ OppCount + DaysSinceLogin )
+
+RFwine <- randomForest(formula=myDTform,
+#train =  random sample , vars = all predictors
+       data=rawContacts[data_train,],
+ntree=500, mtry=4,
+importance=TRUE,
+localImp=TRUE,
+na.action=na.roughfix,
+replace=FALSE)
 
 #Results
 str(RFwine)
@@ -154,32 +166,48 @@ round(head(RFwine$err.rate, 15), 4)
 # We can fnd the minimum quite simply, together with a list of the indexes where each minimum occurs
 min.err <- min(data.frame(RFwine$err.rate)["OOB"])
 min.err.idx <- which(data.frame(RFwine$err.rate)["OOB"]
-                     
-                     
+
+
 
 =============================================================================     
 
-# Appy to TrustLicensing Opps
+# Appy to [ContactsActiveIMS]
 
 =============================================================================  
 
-require(rpart, quietly=TRUE)
+set.seed(42)
+head(rawContacts)
 
-# Reset the random number seed to obtain the same results each time.
-set.seed(crv$seed)
+library(randomForest)
 
-# Build the Decision Tree model.
-crs$rpart <- rpart(StatusNew ~ .,
-data=crs$dataset[crs$train, c(crs$input, crs$target)],
-method="class",
-parms=list(split="information"),
-control=rpart.control(usesurrogate=0, 
-                      maxsurrogate=0))
+#Take 70:30 split
+set.seed(42)
+data_all <- seq(1:nrow(rawContacts))
+data_train <- sample(nrow(rawContacts), 0.7*nrow(rawContacts))
+data_test <- data_all[-data_train]
 
-# Generate a textual view of the Decision Tree model.
+myDTform <- formula(SiteArr ~ OppCount + DaysSinceLogin )
 
-print(crs$rpart)
-printcp(crs$rpart)
-cat("\n")
-                     
-                     
+myModRF1 <- randomForest(formula=myDTform,
+                  #train =  random sample , vars = all predictors
+                  data=rawContacts[data_train,],
+                  ntree=500, mtry=4,
+                  importance=TRUE,
+                  localImp=TRUE,
+                  na.action=na.roughfix,
+                  replace=FALSE)
+
+#Results
+str(myModRF1)
+head(myModRF1$predicted, 10)
+
+# The importance component records the information related to measures of variable importance
+head(myModRF1$importance)
+
+#The importance of each variable predicting outcome for each observation in the training dataset
+head(myModRF1$localImp)[,1:4]
+
+# The error rate data is stored as the err.rate component
+RFwine$localImp[,1:4]
+
+

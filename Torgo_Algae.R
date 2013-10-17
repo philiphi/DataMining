@@ -1,4 +1,3 @@
-# 06/07/2013
 # Torgo book: Data Mining with R
 # Chapter2: Predicting Algae Blooms
 # package accompanying the book that includes data frames with the datasets ready for u
