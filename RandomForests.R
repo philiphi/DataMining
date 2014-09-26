@@ -24,7 +24,7 @@
 
 
 installed.packages()
-# install.packages("rattle")
+install.packages("rattle", lib="C:/R/libraries") 
 library(rattle)
 library(randomForest)
 rattle()
